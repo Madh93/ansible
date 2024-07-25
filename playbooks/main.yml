@@ -1,0 +1,21 @@
+---
+- name: Homelab configuration
+  hosts: homelab
+  become: true
+
+  tasks:
+    - name: Install essential packages
+      apt:
+        name:
+          - git
+          - ca-certificates
+          - curl
+          - lm-sensors
+          - htop
+          - wakeonlan
+          - fzf
+          - gron
+          - vim
+
+- name: Configure Docker
+  import_playbook: docker.yml
