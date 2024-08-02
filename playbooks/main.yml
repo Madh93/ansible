@@ -1,5 +1,5 @@
 ---
-- name: Homelab configuration
+- name: Main configuration
   hosts: homelab
   become: true
 
@@ -16,6 +16,9 @@
           - fzf
           - gron
           - vim
+
+- name: Configure Homelab
+  import_playbook: homelab.yml
 
 - name: Configure Docker
   import_playbook: docker.yml
