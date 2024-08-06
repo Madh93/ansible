@@ -16,6 +16,8 @@
           - fzf
           - gron
           - vim
+          - apache2-utils
+          - net-tools
 
 - name: Configure Homelab
   import_playbook: homelab.yml
