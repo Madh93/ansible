@@ -16,11 +16,14 @@
           - fzf
           - gron
           - vim
-          - apache2-utils
-          - net-tools
+          - apache2-utils   # htpasswd
+          - net-tools       # netstat
 
 - name: Configure Homelab
   import_playbook: homelab.yml
 
 - name: Configure Docker
   import_playbook: docker.yml
+
+- name: Configure NFS Mounts
+  import_playbook: mount.yml

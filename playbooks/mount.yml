@@ -1,0 +1,45 @@
+---
+- name: Configure NFS mounts
+  hosts: homelab
+  become: true
+
+  tasks:
+    - name: Install required dependencies
+      apt:
+        pkg:
+          - nfs-common
+
+    - name: Create NAS Docker mount directory
+      file:
+        path: /mnt/nas/docker_data
+        state: directory
+        mode: '0755'
+
+    - name: Create systemd mount for docker
+      copy:
+        dest: /etc/systemd/system/mnt-nas-docker_data.mount
+        content: |
+          [Unit]
+          Description=Mount NAS Docker data
+
+          [Mount]
+          What=192.168.1.6:/volume1/docker_data
+          Where=/mnt/nas/docker_data
+          Type=nfs
+          Options=vers=4
+          TimeoutSec=30
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - Reload systemd
+
+    - name: Enable and start the systemd mount
+      systemd:
+        name: mnt-nas-docker_data.mount
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Reload systemd
+      command: systemctl daemon-reload
