@@ -9,9 +9,9 @@
         pkg:
           - nfs-common
 
-    - name: Create NAS Docker mount directory
+    - name: Create NAS mount directory
       file:
-        path: /mnt/nas/docker_data
+        path: /mnt/nas
         state: directory
         mode: '0755'
 
