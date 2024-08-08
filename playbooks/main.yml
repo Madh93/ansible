@@ -27,3 +27,6 @@
 
 - name: Configure NFS Mounts
   import_playbook: mount.yml
+
+- name: Configure Backup
+  import_playbook: backup.yml

@@ -1,0 +1,67 @@
+---
+- name: Schedule backup
+  hosts: homelab
+  become: true
+
+  tasks:
+    - name: Create the backup script directory
+      file:
+        path: /usr/local/bin
+        state: directory
+        mode: '0755'
+
+    - name: Create the backup script
+      copy:
+        dest: /usr/local/bin/backup
+        content: |
+          #!/bin/bash
+          SOURCE_DIR="/docker/data/"
+          DEST_DIR="/mnt/nas/docker_data/"
+          LOG_FILE="/var/log/backup.log"
+
+          echo "---- Backup started at $(date +'%Y-%m-%d %H:%M:%S')" >> $LOG_FILE
+          rsync -avh --delete --no-perms --no-o --no-g $SOURCE_DIR $DEST_DIR >> $LOG_FILE 2>&1
+          echo "---- Backup completed at $(date +'%Y-%m-%d %H:%M:%S')" >> $LOG_FILE
+        mode: '0755'
+
+    - name: Create systemd service for backup script
+      copy:
+        dest: /etc/systemd/system/backup.service
+        content: |
+          [Unit]
+          Description=Run backup script
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/backup
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - Reload systemd
+
+    - name: Create systemd timer for backup script
+      copy:
+        dest: /etc/systemd/system/backup.timer
+        content: |
+          [Unit]
+          Description=Run backup script nightly
+
+          [Timer]
+          OnCalendar=*-*-* 01:00:00
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+      notify:
+        - Reload systemd
+
+    - name: Enable and start the systemd timer
+      systemd:
+        name: backup.timer
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Reload systemd
+      command: systemctl daemon-reload
