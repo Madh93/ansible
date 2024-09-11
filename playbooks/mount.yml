@@ -3,6 +3,13 @@
   hosts: homelab
   become: true
 
+  vars:
+    mount_directories:
+      - name: docker_data
+        path: 192.168.1.6:/volume1/docker_data
+      - name: paperless
+        path: 192.168.1.6:/volume1/paperless
+
   tasks:
     - name: Install required dependencies
       apt:
@@ -15,30 +22,32 @@
         state: directory
         mode: '0755'
 
-    - name: Create systemd mount for docker
+    - name: Create systemd mount files for NFS shares
       copy:
-        dest: /etc/systemd/system/mnt-nas-docker_data.mount
+        dest: "/etc/systemd/system/mnt-nas-{{ item.name }}.mount"
         content: |
           [Unit]
-          Description=Mount NAS Docker data
+          Description=Mount NAS {{ item.name }}
 
           [Mount]
-          What=192.168.1.6:/volume1/docker_data
-          Where=/mnt/nas/docker_data
+          What={{ item.path }}
+          Where=/mnt/nas/{{ item.name }}
           Type=nfs
           Options=vers=4
           TimeoutSec=30
 
           [Install]
           WantedBy=multi-user.target
+      loop: "{{ mount_directories }}"
       notify:
         - Reload systemd
 
-    - name: Enable and start the systemd mount
+    - name: Enable and start the systemd mounts
       systemd:
-        name: mnt-nas-docker_data.mount
+        name: "mnt-nas-{{ item.name }}.mount"
         enabled: true
         state: started
+      loop: "{{ mount_directories }}"
 
   handlers:
     - name: Reload systemd
