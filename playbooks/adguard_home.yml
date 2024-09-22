@@ -1,0 +1,15 @@
+---
+- name: AdGuard Home requirements
+  hosts: homelab
+  become: true
+
+  tasks:
+    - name: Stop systemd-resolved service
+      systemd:
+        name: systemd-resolved
+        state: stopped
+
+    - name: Disable systemd-resolved service
+      systemd:
+        name: systemd-resolved
+        enabled: false

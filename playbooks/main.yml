@@ -26,6 +26,9 @@
 - name: Configure Docker
   import_playbook: docker.yml
 
+- name: Configure AdGuard Home
+  import_playbook: adguard_home.yml
+
 - name: Configure NFS Mounts
   import_playbook: mount.yml
 
