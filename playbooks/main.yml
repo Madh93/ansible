@@ -16,6 +16,7 @@
           - fzf
           - gron
           - vim
+          - p7zip           # 7z
           - apache2-utils   # htpasswd
           - net-tools       # netstat
 
