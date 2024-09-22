@@ -13,3 +13,16 @@
       systemd:
         name: systemd-resolved
         enabled: false
+
+    - name: Remove /etc/resolv.conf symlink
+      file:
+        path: /etc/resolv.conf
+        state: absent
+
+    - name: Create new /etc/resolv.conf
+      copy:
+        content: |
+          nameserver 1.1.1.1
+          nameserver 1.0.0.1
+        dest: /etc/resolv.conf
+        mode: '0644'
