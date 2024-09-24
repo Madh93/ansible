@@ -76,6 +76,24 @@
         enabled: true
         state: started
 
+    - name: Configure logrotate for backup log
+      copy:
+        dest: /etc/logrotate.d/backup
+        content: |
+          su root root
+          /var/log/backup.log {
+              weekly
+              rotate 4
+              compress
+              missingok
+              notifempty
+              create 0640 root root
+              sharedscripts
+              postrotate
+                  systemctl reload rsyslog > /dev/null 2> /dev/null || true
+              endscript
+          }
+
   handlers:
     - name: Reload systemd
       command: systemctl daemon-reload
