@@ -9,6 +9,8 @@
         path: 192.168.1.6:/volume1/docker_data
       - name: paperless
         path: 192.168.1.6:/volume1/paperless
+      - name: syncthing
+        path: 192.168.1.6:/volume1/syncthing
 
   tasks:
     - name: Install required dependencies

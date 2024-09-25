@@ -9,6 +9,8 @@
         dest: "/mnt/nas/docker_data/"
       - source: "/docker/paperless/"
         dest: "/mnt/nas/paperless/"
+      - source: "/docker/syncthing/"
+        dest: "/mnt/nas/syncthing/"
 
   tasks:
     - name: Create the backup script directory
