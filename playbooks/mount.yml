@@ -13,6 +13,12 @@
         path: 192.168.1.6:/volume1/syncthing
       - name: books
         path: 192.168.1.6:/volume1/books
+      - name: comics
+        path: 192.168.1.6:/volume1/comics
+      - name: downloads
+        path: 192.168.1.6:/volume1/downloads
+      - name: photos
+        path: 192.168.1.6:/volume1/photos
 
   tasks:
     - name: Install required dependencies
