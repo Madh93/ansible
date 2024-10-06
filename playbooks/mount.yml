@@ -19,6 +19,8 @@
         path: 192.168.1.6:/volume1/downloads
       - name: photos
         path: 192.168.1.6:/volume1/photos
+      - name: media
+        path: 192.168.1.6:/volume1/media
 
   tasks:
     - name: Install required dependencies
