@@ -11,6 +11,8 @@
         path: 192.168.1.6:/volume1/paperless
       - name: syncthing
         path: 192.168.1.6:/volume1/syncthing
+      - name: filebrowser
+        path: 192.168.1.6:/volume1/filebrowser
       - name: books
         path: 192.168.1.6:/volume1/books
       - name: comics
