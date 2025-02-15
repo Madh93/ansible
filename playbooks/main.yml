@@ -35,3 +35,6 @@
 
 - name: Configure Backup
   import_playbook: backup.yml
+
+- name: Configure Gitea
+  import_playbook: gitea.yml
