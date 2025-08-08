@@ -14,10 +14,16 @@
         name: systemd-resolved
         enabled: false
 
+    - name: Check status of /etc/resolv.conf
+      ansible.builtin.stat:
+        path: /etc/resolv.conf
+      register: resolv
+
     - name: Remove /etc/resolv.conf symlink
       file:
         path: /etc/resolv.conf
         state: absent
+      when: resolv.stat.islnk is defined and resolv.stat.islnk
 
     - name: Create new /etc/resolv.conf
       copy:
