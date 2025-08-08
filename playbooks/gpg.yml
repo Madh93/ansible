@@ -1,0 +1,24 @@
+---
+- name: GPG configuration
+  hosts: homelab
+  become: true
+
+  vars:
+    gpg_key_id: "87638F555971C9470EE0970292798C20EED0C422"
+    gpg_keyserver: "keys.openpgp.org"
+
+  tasks:
+    - name: Install required dependencies
+      apt:
+        pkg:
+          - gnupg
+
+    - name: Check if GPG key already exists
+      command: "gpg --list-keys {{ gpg_key_id }}"
+      register: gpg_key_check
+      changed_when: false
+      failed_when: false
+
+    - name: Import GPG key if it does not exist
+      command: "gpg --keyserver {{ gpg_keyserver }} --recv-keys {{ gpg_key_id }}"
+      when: gpg_key_check.rc != 0
