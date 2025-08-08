@@ -13,79 +13,81 @@
         dest: "/mnt/nas/syncthing/"
       - source: "/docker/books/"
         dest: "/mnt/nas/books/"
+    healthchecks_backup_url: "{{ lookup('env', 'HEALTHCHECKS_BACKUP_URL') }}"
+    healthchecks_backup_secrets_url: "{{ lookup('env', 'HEALTHCHECKS_BACKUP_SECRETS_URL') }}"
+    backup_jobs:
+      - name: "backup"
+        description: "regular files using rsync"
+        template_file: "backup.sh.j2"
+        schedule: "01:00:00"
+        log_path: "/var/log/backup.log"
+        healthcheck_url: "{{ lookup('env', 'HEALTHCHECKS_BACKUP_URL') }}"
+      - name: "backup-secrets"
+        description: "application secrets (.env files) using gpg"
+        template_file: "backup-secrets.sh.j2"
+        schedule: "00:55:00"
+        log_path: "/var/log/backup-secrets.log"
+        healthcheck_url: "{{ lookup('env', 'HEALTHCHECKS_BACKUP_SECRETS_URL') }}"
 
   tasks:
-    - name: Create the backup script directory
+    - name: Ensure backup script directory exists
       file:
         path: /usr/local/bin
         state: directory
         mode: '0755'
 
-    - name: Create the backup script
-      copy:
-        dest: /usr/local/bin/backup
-        content: |
-          #!/bin/bash
-          LOG_FILE="/var/log/backup.log"
-          SOURCE_DIRS=({% for dir in backup_directories %} "{{ dir.source }}" {% endfor %})
-          DEST_DIRS=({% for dir in backup_directories %} "{{ dir.dest }}" {% endfor %})
-
-          echo "---- Backup started at $(date +'%Y-%m-%d %H:%M:%S')" >> $LOG_FILE
-
-          for i in "${!SOURCE_DIRS[@]}"; do
-            SOURCE_DIR=${SOURCE_DIRS[$i]}
-            DEST_DIR=${DEST_DIRS[$i]}
-            echo "++++ Backing up from $SOURCE_DIR to $DEST_DIR" >> $LOG_FILE
-            rsync -avh --delete --no-perms --no-o --no-g "$SOURCE_DIR" "$DEST_DIR" >> $LOG_FILE 2>&1
-          done
-
-          echo "---- Backup completed at $(date +'%Y-%m-%d %H:%M:%S')" >> $LOG_FILE
+    - name: Create the backup scripts from templates
+      template:
+        src: "templates/{{ item.template_file }}"
+        dest: "/usr/local/bin/{{ item.name }}"
         mode: '0755'
+      loop: "{{ backup_jobs }}"
 
-    - name: Create systemd service for backup script
+    - name: Create systemd services
       copy:
-        dest: /etc/systemd/system/backup.service
+        dest: "/etc/systemd/system/{{ item.name }}.service"
         content: |
           [Unit]
-          Description=Run backup script
+          Description=Run backup script for {{ item.description }}
 
           [Service]
           Type=oneshot
-          ExecStart=/usr/local/bin/backup
+          ExecStart=/usr/local/bin/{{ item.name }}
 
           [Install]
           WantedBy=multi-user.target
-      notify:
-        - Reload systemd
+      loop: "{{ backup_jobs }}"
+      notify: Reload systemd
 
-    - name: Create systemd timer for backup script
+    - name: Create systemd timers
       copy:
-        dest: /etc/systemd/system/backup.timer
+        dest: "/etc/systemd/system/{{ item.name }}.timer"
         content: |
           [Unit]
-          Description=Run backup script nightly
-
+          Description=Run {{ item.name }} script on a schedule
           [Timer]
-          OnCalendar=*-*-* 01:00:00
+
+          OnCalendar=*-*-* {{ item.schedule }}
           Persistent=true
 
           [Install]
           WantedBy=timers.target
-      notify:
-        - Reload systemd
+      loop: "{{ backup_jobs }}"
+      notify: Reload systemd
 
-    - name: Enable and start the systemd timer
+    - name: Enable and start the systemd timers
       systemd:
-        name: backup.timer
+        name: "{{ item.name }}.timer"
         enabled: true
         state: started
+      loop: "{{ backup_jobs }}"
 
-    - name: Configure logrotate for backup log
+    - name: Configure logrotate for backup logs
       copy:
-        dest: /etc/logrotate.d/backup
+        dest: "/etc/logrotate.d/{{ item.name }}"
         content: |
           su root root
-          /var/log/backup.log {
+          {{ item.log_path }} {
               weekly
               rotate 4
               compress
@@ -97,7 +99,9 @@
                   systemctl reload rsyslog > /dev/null 2> /dev/null || true
               endscript
           }
+      loop: "{{ backup_jobs }}"
 
   handlers:
     - name: Reload systemd
-      command: systemctl daemon-reload
+      systemd:
+        daemon_reload: true
